@@ -6,6 +6,7 @@ import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 
+import javax.annotation.Nullable;
 import javax.security.auth.login.LoginException;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -17,7 +18,7 @@ import java.util.Map;
 @UtilityClass
 public class Main extends ListenerAdapter
 {
-	private JDA jda;
+	@Nullable private JDA jda;
 	private final Map<String, String> args = new HashMap<>();
 
 	public static void main(String[] pArgs)
