@@ -1,0 +1,5 @@
+{
+  "oauth": "<BOT_OAUTH_TOKEN>",
+  "guild_base": "<PARENT_GUILD_ID>",
+  "children": [ ]
+}
