@@ -73,6 +73,8 @@ public class Events extends ListenerAdapter
 	private void syncCommand(TextChannel channel, User sender, String[] args)
 	{
 		final Consumer<Message> deleteAfter5 = m -> m.delete().queueAfter(5, TimeUnit.SECONDS);
+		Guild guild = channel.getGuild();
+		Guild parent = Main.getParentGuild();
 
 		if(args.length == 0)
 		{
@@ -86,17 +88,26 @@ public class Events extends ListenerAdapter
 		// to be synced from the parent guild
 		if(sub.equalsIgnoreCase("add"))
 		{
-			Guild guild = channel.getGuild();
-			Guild parent = Main.getParentGuild();
-
 			if(guild.getIdLong() == parent.getIdLong())
-				channel.sendMessage(String.format("%s can not sync with itself", guild.getName())).queue(deleteAfter5);
+				channel.sendMessage(String.format("%s can not modify sync status of itself", guild.getName())).queue(deleteAfter5);
 			else if(Main.isChildGuild(guild))
 				channel.sendMessage(String.format("%s is already syncing with %s", guild.getName(), parent.getName())).queue(deleteAfter5);
 			else
 			{
 				Main.addChildGuild(guild);
 				channel.sendMessage(String.format("%s will now be synced with %s", guild.getName(), parent.getName())).queue(deleteAfter5);
+			}
+		}
+		else if(sub.equalsIgnoreCase("remove"))
+		{
+			if(guild.getIdLong() == parent.getIdLong())
+				channel.sendMessage(String.format("%s can not modify sync status of itself", guild.getName())).queue(deleteAfter5);
+			else if(!Main.isChildGuild(guild))
+				channel.sendMessage(String.format("%s must already be syncing with %s", guild.getName(), parent.getName())).queue(deleteAfter5);
+			else
+			{
+				Main.removeChildGuild(guild);
+				channel.sendMessage(String.format("%s will no longer be synced with %s", guild.getName(), parent.getName())).queue(deleteAfter5);
 			}
 		}
 	}

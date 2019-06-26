@@ -144,8 +144,20 @@ public class Main extends ListenerAdapter
 
 	public void addChildGuild(Guild guild)
 	{
-		children.add(guild.getIdLong());
-		writeConfig();
+		if(!isChildGuild(guild))
+		{
+			children.add(guild.getIdLong());
+			writeConfig();
+		}
+	}
+
+	public void removeChildGuild(Guild guild)
+	{
+		if(isChildGuild(guild))
+		{
+			children.remove(guild.getIdLong());
+			writeConfig();
+		}
 	}
 
 	private void writeConfig()
