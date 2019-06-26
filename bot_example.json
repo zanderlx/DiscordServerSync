@@ -1,5 +1,11 @@
 {
   "oauth": "<BOT_OAUTH_TOKEN>",
+  "sync_cooldown": 10,
   "guild_base": "<PARENT_GUILD_ID>",
-  "children": [ ]
+  "children": [ ],
+  "roles": {
+    "<ROLE_ID_FROM_PARENT>": {
+      "<CHILD_GUILD_ID>": "<CHILD_GUILD_ROLE_ID>"
+    }
+  }
 }
