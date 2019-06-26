@@ -2,30 +2,35 @@ package com.apex.Discord.DSS;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
+import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 
 import javax.annotation.Nullable;
 import javax.security.auth.login.LoginException;
 import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 
 @Slf4j
 @UtilityClass
 public class Main extends ListenerAdapter
 {
-	@Nullable private JDA jda;
-	private final Gson GSON = new GsonBuilder().create();
+	private final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
 	// suppress nullable warnings
-	// this field is never null
-	// only time it is, bot *should* die out and stops running
+	// these field should never null
+	// only time they can be null, the but *should* die out and shutdown
+	@SuppressWarnings("NullableProblems") private JDA jda;
 	@SuppressWarnings("NullableProblems") private JsonObject config;
+
+	private List<Long> children = new ArrayList<>();
 
 	public static void main(String[] pArgs)
 	{
@@ -51,6 +56,10 @@ public class Main extends ListenerAdapter
 			log.error("Failed to read bot json config", e);
 			return false;
 		}
+
+		// copy children ids from json file to array
+		config.get("children").getAsJsonArray().forEach(e -> children.add(e.getAsLong()));
+
 		return true;
 	}
 
@@ -113,11 +122,51 @@ public class Main extends ListenerAdapter
 	private void shutdown()
 	{
 		log.info("Shutting down bot...");
+		// writeConfig();
+		log.info("Disconnecting from Discord servers...");
+		jda.shutdown();
+	}
 
-		if(jda != null)
+	public JDA getJda()
+	{
+		return jda;
+	}
+
+	public Guild getParentGuild()
+	{
+		return jda.getGuildById(config.get("guild_base").getAsLong());
+	}
+
+	public boolean isChildGuild(Guild guild)
+	{
+		return children.contains(guild.getIdLong());
+	}
+
+	public void addChildGuild(Guild guild)
+	{
+		children.add(guild.getIdLong());
+		writeConfig();
+	}
+
+	private void writeConfig()
+	{
+		// update children
+		JsonArray newChildren = new JsonArray();
+		children.forEach(newChildren::add);
+		config.add("children", newChildren);
+
+		// write to file
+		try
 		{
-			log.info("Disconnecting from Discord servers...");
-			jda.shutdown();
+			// this replaced with blank file
+			// GSON.toJson(config, new FileWriter(new File("./bot.json")));
+
+			// wrote out the json file fine
+			Files.write(Paths.get("./bot.json"), Collections.singleton(GSON.toJson(config)));
+		}
+		catch(IOException e)
+		{
+			log.error("Failed to write bot.json");
 		}
 	}
 }

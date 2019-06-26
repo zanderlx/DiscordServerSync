@@ -1,5 +1,6 @@
 package com.apex.Discord.DSS;
 
+import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.User;
@@ -10,6 +11,8 @@ import org.apache.logging.log4j.util.TriConsumer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 public class Events extends ListenerAdapter
 {
@@ -18,7 +21,9 @@ public class Events extends ListenerAdapter
 
 	private Events()
 	{
-		commandMap.put("ping", (channel, user, args) -> channel.sendMessage(String.format("%s Pong!", user.getName())).queue());
+		// commandMap.put("ping", (channel, user, args) -> channel.sendMessage(String.format("%s Pong!", user.getName())).queue());
+
+		commandMap.put("sync", this::syncCommand);
 	}
 
 	@Override
@@ -63,5 +68,36 @@ public class Events extends ListenerAdapter
 			return true;
 		}
 		return false;
+	}
+
+	private void syncCommand(TextChannel channel, User sender, String[] args)
+	{
+		final Consumer<Message> deleteAfter5 = m -> m.delete().queueAfter(5, TimeUnit.SECONDS);
+
+		if(args.length == 0)
+		{
+			channel.sendMessage("Invalid number of arguments passed").queue(deleteAfter5);
+			return;
+		}
+
+		String sub = args[0];
+
+		// marks guild the command was run from
+		// to be synced from the parent guild
+		if(sub.equalsIgnoreCase("add"))
+		{
+			Guild guild = channel.getGuild();
+			Guild parent = Main.getParentGuild();
+
+			if(guild.getIdLong() == parent.getIdLong())
+				channel.sendMessage(String.format("%s can not sync with itself", guild.getName())).queue(deleteAfter5);
+			else if(Main.isChildGuild(guild))
+				channel.sendMessage(String.format("%s is already syncing with %s", guild.getName(), parent.getName())).queue(deleteAfter5);
+			else
+			{
+				Main.addChildGuild(guild);
+				channel.sendMessage(String.format("%s will now be synced with %s", guild.getName(), parent.getName())).queue(deleteAfter5);
+			}
+		}
 	}
 }
