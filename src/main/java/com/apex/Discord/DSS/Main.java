@@ -1,9 +1,6 @@
 package com.apex.Discord.DSS;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.core.JDA;
@@ -65,6 +62,16 @@ public class Main extends ListenerAdapter
 
 		// copy children ids from json file to array
 		config.get("children").getAsJsonArray().forEach(e -> children.add(e.getAsLong()));
+
+		// copy role ids from config
+		JsonObject roles = config.get("roles").getAsJsonObject();
+
+		roles.keySet().forEach(key -> {
+			Map<Long, Long> map = new HashMap<>();
+			JsonObject child = roles.getAsJsonObject(key);
+			child.keySet().forEach(sKey -> map.put(Long.valueOf(sKey), child.get(sKey).getAsLong()));
+			roleIdMap.put(Long.valueOf(key), map);
+		});
 
 		return true;
 	}
