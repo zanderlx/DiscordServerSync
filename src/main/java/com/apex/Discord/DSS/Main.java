@@ -1,5 +1,8 @@
 package com.apex.Discord.DSS;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.core.JDA;
@@ -8,9 +11,7 @@ import net.dv8tion.jda.core.hooks.ListenerAdapter;
 
 import javax.annotation.Nullable;
 import javax.security.auth.login.LoginException;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,12 +20,19 @@ import java.util.Map;
 public class Main extends ListenerAdapter
 {
 	@Nullable private JDA jda;
-	private final Map<String, String> args = new HashMap<>();
+	private final Gson GSON = new GsonBuilder().create();
+
+	// suppress nullable warnings
+	// this field is never null
+	// only time it is, bot *should* die out and stops running
+	@SuppressWarnings("NullableProblems") private JsonObject config;
 
 	public static void main(String[] pArgs)
 	{
-		readArgs(pArgs);
-
+		// bot.json must be in same dir
+		// as jar is running from
+		if(!readConfig())
+			return;
 		if(!startUp())
 			return;
 
@@ -32,24 +40,18 @@ public class Main extends ListenerAdapter
 		shutdown();
 	}
 
-	private void readArgs(String[] pArgs)
+	private boolean readConfig()
 	{
-		// --<key> <value>, program args
-		// --oauth {} - bot oauth token
-		for(int i = 0; i < pArgs.length; i++)
+		try
 		{
-			String key = pArgs[i];
-
-			if(i + 1 > pArgs.length - 1)
-				break;
-
-			String value = pArgs[i + 1];
-
-			if(!key.startsWith("--"))
-				continue;
-
-			args.put(key.substring(2).toLowerCase(), value);
+			config = GSON.fromJson(new FileReader(new File("./bot.json")), JsonObject.class);
 		}
+		catch(FileNotFoundException e)
+		{
+			log.error("Failed to read bot json config", e);
+			return false;
+		}
+		return true;
 	}
 
 	private boolean startUp()
@@ -58,7 +60,7 @@ public class Main extends ListenerAdapter
 
 		try
 		{
-			jda = new JDABuilder(args.get("oauth")).build();
+			jda = new JDABuilder(config.get("oauth").getAsString()).build();
 		}
 		catch(LoginException e)
 		{
