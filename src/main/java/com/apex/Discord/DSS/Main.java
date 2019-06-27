@@ -1,8 +1,6 @@
 package com.apex.Discord.DSS;
 
 import com.google.gson.*;
-import lombok.experimental.UtilityClass;
-import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
 import net.dv8tion.jda.core.Permission;
@@ -10,8 +8,9 @@ import net.dv8tion.jda.core.entities.*;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 import net.dv8tion.jda.core.requests.RestAction;
 import net.dv8tion.jda.core.requests.restaction.AuditableRestAction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import javax.security.auth.login.LoginException;
 import java.io.*;
 import java.nio.file.Files;
@@ -20,20 +19,19 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-@Slf4j
-@UtilityClass
 public class Main extends ListenerAdapter
 {
-	private final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+	private static final Logger log = LoggerFactory.getLogger("DiscordServerSync");
+	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
 	// suppress nullable warnings
 	// these field should never null
 	// only time they can be null, the but *should* die out and shutdown
-	@SuppressWarnings("NullableProblems") private JDA jda;
-	@SuppressWarnings("NullableProblems") private JsonObject config;
+	@SuppressWarnings("NullableProblems") private static JDA jda;
+	@SuppressWarnings("NullableProblems") private static JsonObject config;
 
-	private List<Long> children = new ArrayList<>();
-	private Map<Long, Map<Long, Long>> roleIdMap = new HashMap<>();
+	private static List<Long> children = new ArrayList<>();
+	private static Map<Long, Map<Long, Long>> roleIdMap = new HashMap<>();
 
 	public static void main(String[] pArgs)
 	{
@@ -48,7 +46,7 @@ public class Main extends ListenerAdapter
 		shutdown();
 	}
 
-	private boolean readConfig()
+	private static boolean readConfig()
 	{
 		try
 		{
@@ -76,7 +74,7 @@ public class Main extends ListenerAdapter
 		return true;
 	}
 
-	private boolean startUp()
+	private static boolean startUp()
 	{
 		log.info("Connecting to Discord...");
 
@@ -105,7 +103,7 @@ public class Main extends ListenerAdapter
 		return true;
 	}
 
-	private void loop()
+	private static void loop()
 	{
 		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
@@ -139,7 +137,7 @@ public class Main extends ListenerAdapter
 		}
 	}
 
-	private void shutdown()
+	private static void shutdown()
 	{
 		log.info("Shutting down bot...");
 		// writeConfig();
@@ -147,7 +145,7 @@ public class Main extends ListenerAdapter
 		jda.shutdown();
 	}
 
-	private void syncChildren()
+	private static void syncChildren()
 	{
 		SelfUser selfUser = jda.getSelfUser();
 		Guild parent = getParentGuild();
@@ -210,7 +208,7 @@ public class Main extends ListenerAdapter
 		CompletableFuture.delayedExecutor(config.get("sync_cooldown").getAsInt(), TimeUnit.SECONDS).execute(Main::syncChildren);
 	}
 
-	private Role getOrCreateRole(Guild guild, Role role)
+	private static Role getOrCreateRole(Guild guild, Role role)
 	{
 		// this method does not check if bot has permissions
 		// that should be checked and handled prior to calling this method
@@ -271,22 +269,22 @@ public class Main extends ListenerAdapter
 		return childRole;
 	}
 
-	public JDA getJda()
+	public static JDA getJda()
 	{
 		return jda;
 	}
 
-	public Guild getParentGuild()
+	public static Guild getParentGuild()
 	{
 		return jda.getGuildById(config.get("guild_base").getAsLong());
 	}
 
-	public boolean isChildGuild(Guild guild)
+	public static boolean isChildGuild(Guild guild)
 	{
 		return children.contains(guild.getIdLong());
 	}
 
-	public void addChildGuild(Guild guild)
+	public static void addChildGuild(Guild guild)
 	{
 		if(!isChildGuild(guild))
 		{
@@ -304,7 +302,7 @@ public class Main extends ListenerAdapter
 		}
 	}
 
-	private void writeConfig()
+	private static void writeConfig()
 	{
 		// update children
 		JsonArray newChildren = new JsonArray();
