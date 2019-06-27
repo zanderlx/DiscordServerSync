@@ -293,7 +293,7 @@ public class Main extends ListenerAdapter
 		}
 	}
 
-	public void removeChildGuild(Guild guild)
+	public static void removeChildGuild(Guild guild)
 	{
 		if(isChildGuild(guild))
 		{
@@ -314,11 +314,7 @@ public class Main extends ListenerAdapter
 
 		roleIdMap.keySet().forEach(key -> {
 			JsonObject obj = new JsonObject();
-
-			roleIdMap.get(key).forEach((sKey, value) -> {
-				obj.addProperty(sKey.toString(), value);
-			});
-
+			roleIdMap.get(key).forEach((sKey, value) -> obj.addProperty(sKey.toString(), value));
 			newRoles.add(key.toString(), obj);
 		});
 
